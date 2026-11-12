@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScholarFlow — Study Plan & Focus Tracker</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">SF</div>
+        <div>
+          <h1>ScholarFlow</h1>
+          <p>Study Plan &amp; Focus</p>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-btn active" data-view="dashboard">
+          <span>📊</span> Dashboard
+        </button>
+        <button class="nav-btn" data-view="tasks">
+          <span>📝</span> Study Plan &amp; Tasks
+        </button>
+        <button class="nav-btn" data-view="weekly">
+          <span>📅</span> Weekly Schedule
+        </button>
+        <button class="nav-btn" data-view="timer">
+          <span>⏱️</span> Focus Timer
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="themeToggle" class="btn btn-secondary btn-full">🌓 Toggle Theme</button>
+        <div class="data-actions">
+          <button id="exportBtn" class="btn btn-ghost btn-sm">Export JSON</button>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+            Import JSON
+            <input type="file" id="importInput" accept=".json" hidden />
+          </label>
+        </div>
+        <button id="resetDemoBtn" class="btn btn-ghost btn-sm btn-full">Reset Sample Data</button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div>
+          <h2 id="viewTitle">Dashboard Overview</h2>
+          <p id="currentDateDisplay" class="muted"></p>
+        </div>
+        <div class="top-actions">
+          <button id="openSubjectModalBtn" class="btn btn-secondary">+ Subject</button>
+          <button id="openTaskModalBtn" class="btn btn-primary">+ New Study Task</button>
+        </div>
+      </header>
+
+      <!-- VIEW 1: DASHBOARD -->
+      <section id="view-dashboard" class="view active">
+        <div class="kpi-grid">
+          <div class="card kpi-card">
+            <span class="kpi-label">Overall Completion</span>
+            <div class="kpi-value" id="kpiCompletion">0%</div>
+            <span class="kpi-sub" id="kpiTaskCount">0 of 0 tasks completed</span>
+          </div>
+          <div class="card kpi-card">
+            <span class="kpi-label">Hours Logged / Planned</span>
+            <div class="kpi-value" id="kpiHours">0h / 0h</div>
+            <span class="kpi-sub">Tracked via Focus Timer &amp; tasks</span>
+          </div>
+          <div class="card kpi-card">
+            <span class="kpi-label">Due Today</span>
+            <div class="kpi-value" id="kpiDueToday">0</div>
+            <span class="kpi-sub" id="kpiOverdue">0 overdue</span>
+          </div>
+          <div class="card kpi-card">
+            <span class="kpi-label">Active Subjects</span>
+            <div class="kpi-value" id="kpiSubjects">0</div>
+            <span class="kpi-sub">Organized study tracks</span>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3>Subject Progress</h3>
+            </div>
+            <div id="subjectProgressList" class="subject-progress-list"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Upcoming Deadlines</h3>
+            </div>
+            <div id="upcomingDeadlinesList" class="deadline-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: STUDY PLAN & TASKS -->
+      <section id="view-tasks" class="view">
+        <div class="card filter-bar">
+          <input type="text" id="searchInput" placeholder="Search tasks or notes..." />
+          <select id="filterSubject">
+            <option value="all">All Subjects</option>
+          </select>
+          <select id="filterStatus">
+            <option value="all">All Statuses</option>
+            <option value="todo">To Do</option>
+            <option value="in-progress">In Progress</option>
+            <option value="done">Completed</option>
+          </select>
+          <select id="filterPriority">
+            <option value="all">All Priorities</option>
+            <option value="high">High Priority</option>
+            <option value="medium">Medium Priority</option>
+            <option value="low">Low Priority</option>
+          </select>
+        </div>
+
+        <div id="tasksContainer" class="tasks-list"></div>
+      </section>
+
+      <!-- VIEW 3: WEEKLY SCHEDULE -->
+      <section id="view-weekly" class="view">
+        <div class="card week-controls">
+          <button id="prevWeekBtn" class="btn btn-secondary">← Previous Week</button>
+          <h3 id="weekRangeLabel">Week of ...</h3>
+          <button id="nextWeekBtn" class="btn btn-secondary">Next Week →</button>
+        </div>
+        <div id="weeklyGrid" class="weekly-grid"></div>
+      </section>
+
+      <!-- VIEW 4: FOCUS TIMER -->
+      <section id="view-timer" class="view">
+        <div class="card timer-card">
+          <div class="timer-modes">
+            <button class="mode-btn active" data-minutes="25">Pomodoro (25m)</button>
+            <button class="mode-btn" data-minutes="5">Short Break (5m)</button>
+            <button class="mode-btn" data-minutes="15">Long Break (15m)</button>
+          </div>
+
+          <div class="timer-ring">
+            <svg viewBox="0 0 220 220">
+              <circle class="ring-bg" cx="110" cy="110" r="96"></circle>
+              <circle id="timerProgressCircle" class="ring-fg" cx="110" cy="110" r="96"></circle>
+            </svg>
+            <div class="timer-display">
+              <span id="timerTime">25:00</span>
+              <small id="timerStatusText">Ready to focus</small>
+            </div>
+          </div>
+
+          <div class="timer-task-select">
+            <label for="timerTaskSelect">Link session to study task:</label>
+            <select id="timerTaskSelect">
+              <option value="">-- General Study Session --</option>
+            </select>
+          </div>
+
+          <div class="timer-controls">
+            <button id="timerStartBtn" class="btn btn-primary">Start</button>
+            <button id="timerPauseBtn" class="btn btn-secondary" disabled>Pause</button>
+            <button id="timerResetBtn" class="btn btn-ghost">Reset</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Task Modal -->
+  <div id="taskModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="taskModalTitle">New Study Task</h3>
+        <button class="close-modal" data-close="taskModal">&times;</button>
+      </div>
+      <form id="taskForm">
+        <input type="hidden" id="taskId" />
+        <div class="form-group">
+          <label>Task Title *</label>
+          <input type="text" id="taskTitle" required placeholder="e.g., Chapter 4 Practice Problems" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Subject *</label>
+            <select id="taskSubject" required></select>
+          </div>
+          <div class="form-group">
+            <label>Target Date *</label>
+            <input type="date" id="taskDate" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Estimated Minutes</label>
+            <input type="number" id="taskEstMinutes" min="5" step="5" value="60" />
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="taskPriority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="taskStatus">
+              <option value="todo">To Do</option>
+              <option value="in-progress">In Progress</option>
+              <option value="done">Completed</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Study Notes / Topics</label>
+          <textarea id="taskNotes" rows="3" placeholder="Key formulas, textbook pages, or goals..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close="taskModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Subject Modal -->
+  <div id="subjectModal" class="modal hidden">
+    <div class="modal-content modal-sm">
+      <div class="modal-header">
+        <h3>Manage Subjects</h3>
+        <button class="close-modal" data-close="subjectModal">&times;</button>
+      </div>
+      <form id="subjectForm" class="inline-form">
+        <input type="text" id="subjectName" required placeholder="Subject name (e.g., Linear Algebra)" />
+        <input type="color" id="subjectColor" value="#4f46e5" title="Choose subject color" />
+        <button type="submit" class="btn btn-primary">Add</button>
+      </form>
+      <div id="subjectManagerList" class="subject-manager-list"></div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
